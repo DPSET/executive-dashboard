@@ -660,6 +660,14 @@ function switchBrand(brand, btn) {
   const colors = { cadm: '#FFD700', dcs: '#C8102E', euro: '#003DA5' };
   btn.style.borderBottom = '4px solid ' + colors[brand];
   btn.style.background = 'rgba(255,255,255,0.15)';
+  // Restore CADM gradient text if it was reset
+  const cadmBtn = document.querySelector('[data-nav][onclick*="cadm"]');
+  if (cadmBtn) {
+    cadmBtn.style.backgroundClip = 'text';
+    cadmBtn.style.webkitBackgroundClip = 'text';
+    cadmBtn.style.webkitTextFillColor = 'transparent';
+    cadmBtn.style.backgroundImage = 'linear-gradient(90deg,#C8102E,#FFD700)';
+  }
 }
 
 // ─── VIEW SWITCH ──────────────────────────────────────────────────────────────
