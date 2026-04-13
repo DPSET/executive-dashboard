@@ -728,7 +728,7 @@
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const DCS_CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRTIKKapVCxkPuYkfdBr9uFgJp-J_BSM7kiLF-T9Wz9Sd_f43JfUYecvMFMbHJ8HB8Uzf5Bx6lrBEqG/pub?gid=672950456&single=true&output=csv';
 const EURO_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vShUFGNABorep04YU0FZ9r3nDOZc0npfh_4x6W9MvAXlfsv9Up-njEzoWqxMGwyoPTx1n1ZR3-gmnFv/pub?gid=60820244&single=true&output=csv';
-const PAYROLL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXxQgSNt05vGGOznvq4Pf1ZxNYG5S2emnwG0UBuvSuBbNWvlB5E1FtI94dcEu3BPbPpHy1FVeB1Tl8/pub?gid=1083795087&single=true&output=csv';
+const PAYROLL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXxQgSNt05vGGOznvq4Pf1ZxNYG5S2emnwG0UBuvSuBbNWvlB5E1FtI94dcEu3BPbPpHy1FVeB1Tl8/pub?gid=511068716&single=true&output=csv';
 
 // ─── BRAND SWITCH ─────────────────────────────────────────────────────────────
 function switchBrand(brand, btn) {
@@ -1175,6 +1175,12 @@ async function loadPayroll() {
       }
     }
     if (payCol === -1) payCol = 15; // fallback P
+
+    // Log first 8 rows to see structure
+    console.log('PAYROLL RAW:');
+    for (let r = 0; r < Math.min(8, grid.length); r++) {
+      console.log('Row' + (r+1) + ':', JSON.stringify(grid[r]));
+    }
 
     // Rows 6-31 (index 5-30) = pay periods, B=date(col1), Q=totalPay(col16)
     // Scan forward to find last row that has BOTH a date AND a value in Q
