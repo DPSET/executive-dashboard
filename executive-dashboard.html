@@ -1176,19 +1176,15 @@ async function loadPayroll() {
     }
     if (payCol === -1) payCol = 15; // fallback P
 
-    // Find latest period — last row with date in col 1 (B) AND data in col 16 (Q)
+    // Rows 6-31 (index 5-30) = pay periods, B=date(col1), Q=totalPay(col16)
+    // Scan forward to find last row that has BOTH a date AND a value in Q
     let latestRow = -1;
-    for (let r = grid.length - 1; r >= 5; r--) {
-      if (g(r, 1) && g(r, 1).includes('/') && g(r, 16)) {
+    for (let r = 30; r >= 5; r--) {
+      if (g(r, 1) && g(r, 16) && parseFloat(clean(g(r, 16))) > 0) {
         latestRow = r; break;
       }
     }
-    if (latestRow === -1) {
-      for (let r = grid.length - 1; r >= 5; r--) {
-        if (g(r, 1) && g(r, 1).includes('/')) { latestRow = r; break; }
-      }
-    }
-    if (latestRow === -1) { setText('pr-date', 'No data yet'); return; }
+    if (latestRow === -1) { setText('pr-date', 'No payroll data yet'); return; }
 
     const ytdRow = 4;
 
