@@ -291,6 +291,7 @@
 
   <div class="nav-tabs">
     <button class="nav-btn active-cadm active" onclick="switchView('cadm-summary', 'cadm', this)">Summary</button>
+    <button class="nav-btn" onclick="switchView('cadm-payroll', 'cadm', this)">Payroll</button>
   </div>
 
   <div id="cadm-summary" class="view active">
@@ -398,6 +399,87 @@
       </div>
     </div>
 
+  </div>
+
+  <div id="cadm-payroll" class="view">
+    <div style="padding:12px 16px 4px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:6px;">Latest period</div>
+      <div class="card" style="background:#f5f5f5;margin-bottom:12px;">
+        <div class="card-label">Period ending</div>
+        <div class="card-value" style="font-size:16px;" id="pr-date">—</div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:8px;">Payroll cost</div>
+      <div class="cards" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-label">Total payroll</div>
+          <div class="card-value" id="pr-total">—</div>
+          <div class="card-sub">Latest period</div>
+        </div>
+        <div class="card">
+          <div class="card-label">YTD average</div>
+          <div class="card-value" id="pr-total-ytd">—</div>
+          <div class="card-sub">Per period</div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#efefef;margin:0 0 16px;"></div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:8px;">Labor metrics vs benchmarks</div>
+      <div class="cards" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-label">Labor GP%</div>
+          <div class="card-value" id="pr-gp-pct">—</div>
+          <div class="card-sub" id="pr-gp-bench">Benchmark: 75–85%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Labor GP% YTD</div>
+          <div class="card-value" id="pr-gp-ytd">—</div>
+          <div class="card-sub">Benchmark: 75–85%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Productivity</div>
+          <div class="card-value" id="pr-prod">—</div>
+          <div class="card-sub" id="pr-prod-bench">Benchmark: 75–85%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Productivity YTD</div>
+          <div class="card-value" id="pr-prod-ytd">—</div>
+          <div class="card-sub">Benchmark: 75–85%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Labor hours</div>
+          <div class="card-value" id="pr-hrs">—</div>
+          <div class="card-sub" id="pr-hrs-bench">Benchmark: 384</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Labor hours YTD</div>
+          <div class="card-value" id="pr-hrs-ytd">—</div>
+          <div class="card-sub">Benchmark: 384</div>
+        </div>
+        <div class="card">
+          <div class="card-label">GP per labor hr</div>
+          <div class="card-value" id="pr-gplh">—</div>
+          <div class="card-sub">Benchmark: $250</div>
+        </div>
+        <div class="card">
+          <div class="card-label">GP per labor hr YTD</div>
+          <div class="card-value" id="pr-gplh-ytd">—</div>
+          <div class="card-sub">Benchmark: $250</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Burden %</div>
+          <div class="card-value" id="pr-burden">—</div>
+          <div class="card-sub">Benchmark: 24%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Burden % YTD</div>
+          <div class="card-value" id="pr-burden-ytd">—</div>
+          <div class="card-sub">Benchmark: 24%</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div><!-- end brand-cadm -->
 
@@ -1067,47 +1149,35 @@ async function loadPayroll() {
     if (txt.trim().startsWith('<')) throw new Error('Sheet not public');
     const grid = parseCSV(txt);
 
-    // Benchmarks from row 0
-    const benchHrs    = 384;
-    const benchGPpct  = 80;   // 75-85% midpoint
-    const benchProd   = 80;   // 75-85% midpoint
-    const benchGPLH   = 250;
-    const benchBurden = 24;
+    const g = (r, c) => String((grid[r]||[])[c] || '').trim();
 
-    // YTD row — scan for "YTD" label
-    let ytdRow = -1;
-    for (let r = 0; r < Math.min(grid.length, 10); r++) {
-      if ((grid[r][0]||'').includes('YTD')) { ytdRow = r; break; }
-    }
+    // Confirmed row/col mapping:
+    // Row 0 (index 0): # of Techs in col 0 (M1)
+    // Row 4 (index 4): YTD Average starts in col 1 (B5)
+    // Row 5 (index 5): 1/10 first payroll period
+    // Cols: 0=Date, 1=Payroll, 2=Variance, 3=Bonus, 4=Management, 5=TotalPayroll
+    //       6=BonusAccrual, 7=TechLabor, 8=Burden%, 9=Productivity, 10=EffectiveLabor
+    //       11=LaborHours, 12=GPperLaborHr, 13=CostPerLaborHr, 14=LaborGP%
+    //       15=CashReq, 16=GP$$$
 
-    // Find latest period — last row with a date value (non-empty col 0, has numbers)
+    const ytdRow = 4; // Row 5 in sheets = index 4
+
+    // Find latest period — last row from index 5 onwards with data in col 1
     let latestRow = -1;
-    for (let r = grid.length - 1; r >= 0; r--) {
-      const v = (grid[r][0]||'').trim();
-      if (v && v.match(/\d+\/\d+/) && clean(grid[r][4]||'')) {
-        latestRow = r; break;
-      }
+    for (let r = grid.length - 1; r >= 5; r--) {
+      if (g(r, 0) && g(r, 1)) { latestRow = r; break; }
     }
 
-    if (latestRow === -1 || ytdRow === -1) {
-      setText('pr-date', 'Data not found');
-      return;
-    }
+    if (latestRow === -1) { setText('pr-date', 'No payroll data yet'); return; }
 
-    // Column mapping based on data dump:
-    // 0=Date, 1=Payroll, 2=Variance, 3=Bonus, 4=Management, 5=TotalPayroll
-    // 6=BonusAccrual, 7=TechLabor, 8=BurdenPct, 9=Productivity, 10=EffectiveLabor
-    // 11=LaborHours, 12=GPperLaborHr, 13=CostPerLaborHr, 14=LaborGPpct
-    // 15=CashReq, 16=GP$$$
-    const g = (r, c) => (grid[r]||[])[c] || '';
-
-    const date       = g(latestRow, 0);
-    const totalPay   = g(latestRow, 5);
-    const burden     = g(latestRow, 8);
-    const prod       = g(latestRow, 9);
-    const laborHrs   = g(latestRow, 11);
-    const gpLH       = g(latestRow, 12);
-    const laborGP    = g(latestRow, 14);
+    const numTechs = g(0, 12); // M1
+    const date     = g(latestRow, 0);
+    const totalPay = g(latestRow, 5);
+    const burden   = g(latestRow, 8);
+    const prod     = g(latestRow, 9);
+    const laborHrs = g(latestRow, 11);
+    const gpLH     = g(latestRow, 12);
+    const laborGP  = g(latestRow, 14);
 
     const ytdTotal   = g(ytdRow, 5);
     const ytdBurden  = g(ytdRow, 8);
