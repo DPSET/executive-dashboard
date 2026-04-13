@@ -1192,20 +1192,47 @@ async function loadPayroll() {
 
     const ytdRow = 4;
 
-    const date     = g(latestRow, 0);
-    const totalPay = g(latestRow, payCol);
-    const burden   = g(latestRow, 8);   // I = Total Burden%
-    const prod     = g(latestRow, 9);   // J = Productivity
-    const laborHrs = g(latestRow, 11);  // L = Labor Hours
-    const gpLH     = g(latestRow, 12);  // M = GP Per Labor HR
-    const laborGP  = g(latestRow, 14);  // O = Labor GP%
+    // Debug: print row 4 and latest row to console
+    console.log('YTD row:', grid[4]);
+    console.log('Latest row:', grid[latestRow]);
 
-    const ytdTotal   = g(ytdRow, payCol);
-    const ytdBurden  = g(ytdRow, 8);
-    const ytdProd    = g(ytdRow, 9);
-    const ytdHrs     = g(ytdRow, 11);
-    const ytdGPLH    = g(ytdRow, 12);
-    const ytdLaborGP = g(ytdRow, 14);
+    // From spreadsheet screenshot (A col is empty/row numbers):
+    // A(0)=empty, B(1)=Date, C(2)=TechLabor, D(3)=TotalBurden%
+    // E(4)=Productivity, F(5)=EffectiveLabor, G(6)=LaborHours
+    // H(7)=GPperLaborHR, I(8)=CostPerLaborHour, J(9)=LaborGP%
+    // K(10)=CashRequirements, L(11)=GP$$$
+    // Total Payroll = Q col but sheet has it further right
+    // Let's scan for it by finding ~48521 in latest row
+    let tpCol = -1;
+    for (let c = 0; c < 25; c++) {
+      const n = parseFloat(clean(g(latestRow, c)));
+      if (n > 40000 && n < 60000) { tpCol = c; break; }
+    }
+    if (tpCol === -1) tpCol = 16;
+    console.log('Total pay col:', tpCol, 'value:', g(latestRow, tpCol));
+
+    const date     = g(latestRow, 1);   // B = Date
+    const totalPay = g(latestRow, tpCol);
+    const burden   = g(latestRow, 3);   // D = Total Burden%
+    const prod     = g(latestRow, 4);   // E = Productivity
+    const laborHrs = g(latestRow, 6);   // G = Labor Hours
+    const gpLH     = g(latestRow, 7);   // H = GP Per Labor HR
+    const laborGP  = g(latestRow, 9);   // J = Labor GP%
+
+    // Find YTD total pay col same way
+    let ytdTpCol = -1;
+    for (let c = 0; c < 25; c++) {
+      const n = parseFloat(clean(g(ytdRow, c)));
+      if (n > 40000 && n < 60000) { ytdTpCol = c; break; }
+    }
+    if (ytdTpCol === -1) ytdTpCol = tpCol;
+
+    const ytdTotal   = g(ytdRow, ytdTpCol);
+    const ytdBurden  = g(ytdRow, 3);
+    const ytdProd    = g(ytdRow, 4);
+    const ytdHrs     = g(ytdRow, 6);
+    const ytdGPLH    = g(ytdRow, 7);
+    const ytdLaborGP = g(ytdRow, 9);
 
     // Smart percent formatter — handles both 0.7110 and 71.10% and "71.10%"
     function pct(v) {
