@@ -1167,10 +1167,10 @@ async function loadPayroll() {
     // 12=LaborHours, 13=GPperLaborHR, 15=LaborGP%
     // Row 4(index 4)=YTD, Rows 5-30=pay periods
 
-    // Find latest — last row with Total Payroll (col 6) > 0
+    // Find latest — last row with Total Payroll (col 16) > 0
     let latestRow = -1;
     for (let r = 30; r >= 5; r--) {
-      if (g(r, 1) && g(r, 6) && parseFloat(clean(g(r, 6))) > 0) {
+      if (g(r, 1) && g(r, 16) && parseFloat(clean(g(r, 16))) > 0) {
         latestRow = r; break;
       }
     }
@@ -1179,14 +1179,14 @@ async function loadPayroll() {
     const ytdRow = 4;
 
     const date     = g(latestRow, 1);   // Date
-    const totalPay = g(latestRow, 6);   // Total Payroll
+    const totalPay = g(latestRow, 16);  // Total Payroll (col 16 = Cash Requirements)
     const burden   = g(latestRow, 9);   // Total Burden %
     const prod     = g(latestRow, 10);  // Productivity
     const laborHrs = g(latestRow, 12);  // Labor Hours
     const gpLH     = g(latestRow, 13);  // GP Per Labor HR
     const laborGP  = g(latestRow, 15);  // Labor GP %
 
-    const ytdTotal   = g(ytdRow, 6);
+    const ytdTotal   = g(ytdRow, 16);  // Total Payroll YTD
     const ytdBurden  = g(ytdRow, 9);
     const ytdProd    = g(ytdRow, 10);
     const ytdHrs     = g(ytdRow, 12);
@@ -1216,41 +1216,43 @@ async function loadPayroll() {
     setText('pr-burden-ytd', pct(ytdBurden));
 
     // Color code vs benchmarks
-    // pctVal converts "71.10%" or "0.7110" to number like 71.10
+    // Higher is better: Labor GP%, Productivity, Labor Hours, GP Per Labor HR
+    // Lower is better: Burden %
     function pctVal(v) {
       const s = String(v).replace('%','').trim();
       const n = parseFloat(s);
       return n < 2 ? n * 100 : n;
     }
-    function colorBench(id, val, greenFn) {
+    function colorEl(id, isGreen) {
       const el = document.getElementById(id);
-      if (!el) return;
-      const n = pctVal(val);
-      if (!isNaN(n)) el.style.color = greenFn(n) ? '#16a34a' : '#dc2626';
+      if (el) el.style.color = isGreen ? '#16a34a' : '#dc2626';
     }
 
-    // Labor GP% — green if >= 75%
-    colorBench('pr-gp-pct',  laborGP,  n => n >= 75);
-    colorBench('pr-gp-ytd',  ytdLaborGP, n => n >= 75);
-    // Productivity — green if 75-85%
-    colorBench('pr-prod',    prod,     n => n >= 75 && n <= 85);
-    colorBench('pr-prod-ytd',ytdProd,  n => n >= 75 && n <= 85);
-    // Labor Hours — green if >= 384
-    colorBench('pr-hrs',     laborHrs, n => n >= 384);
-    colorBench('pr-hrs-ytd', ytdHrs,   n => n >= 384);
-    // GP Per Labor HR — green if >= 250
-    colorBench('pr-gplh',    gpLH,     n => parseFloat(clean(gpLH)) >= 250);
-    colorBench('pr-gplh-ytd',ytdGPLH,  n => parseFloat(clean(ytdGPLH)) >= 250);
-    // Burden % — green if 24-28%
-    colorBench('pr-burden',    burden,    n => n >= 24 && n <= 28);
-    colorBench('pr-burden-ytd',ytdBurden, n => n >= 24 && n <= 28);
+    const gpN      = pctVal(laborGP);
+    const prodN    = pctVal(prod);
+    const hrsN     = parseFloat(clean(laborHrs));
+    const gpLHN    = parseFloat(clean(gpLH));
+    const burdenN  = pctVal(burden);
+    const ytdGpN   = pctVal(ytdLaborGP);
+    const ytdProdN = pctVal(ytdProd);
+    const ytdHrsN  = parseFloat(clean(ytdHrs));
+    const ytdGpLHN = parseFloat(clean(ytdGPLH));
+    const ytdBurN  = pctVal(ytdBurden);
 
-    const gpOK   = pctVal(laborGP) >= 75;
-    const prodOK = pctVal(prod) >= 75 && pctVal(prod) <= 85;
-    const hrsOK  = parseFloat(clean(laborHrs)) >= 384;
-    setText('pr-gp-bench',   (gpOK   ? '✓' : '✗') + ' Benchmark: 75–85%');
-    setText('pr-prod-bench', (prodOK ? '✓' : '✗') + ' Benchmark: 75–85%');
-    setText('pr-hrs-bench',  (hrsOK  ? '✓' : '✗') + ' Benchmark: 384');
+    colorEl('pr-gp-pct',     gpN >= 75);        // higher better
+    colorEl('pr-gp-ytd',     ytdGpN >= 75);
+    colorEl('pr-prod',       prodN >= 75);       // higher better
+    colorEl('pr-prod-ytd',   ytdProdN >= 75);
+    colorEl('pr-hrs',        hrsN >= 384);       // higher better
+    colorEl('pr-hrs-ytd',    ytdHrsN >= 384);
+    colorEl('pr-gplh',       gpLHN >= 250);      // higher better
+    colorEl('pr-gplh-ytd',   ytdGpLHN >= 250);
+    colorEl('pr-burden',     burdenN <= 28);     // lower better, red if > 28%
+    colorEl('pr-burden-ytd', ytdBurN <= 28);
+
+    setText('pr-gp-bench',   (gpN   >= 75  ? '✓' : '✗') + ' Benchmark: ≥75%');
+    setText('pr-prod-bench', (prodN >= 75  ? '✓' : '✗') + ' Benchmark: ≥75%');
+    setText('pr-hrs-bench',  (hrsN  >= 384 ? '✓' : '✗') + ' Benchmark: ≥384 hrs');
 
   } catch(e) {
     setText('pr-date', '⚠️ ' + e.message);
