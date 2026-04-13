@@ -324,8 +324,12 @@
           <div class="card-value" id="dcs-gp-pct">—</div>
         </div>
         <div class="card">
-          <div class="card-label">Hours billed</div>
+          <div class="card-label">Hours billed MTD</div>
           <div class="card-value" id="dcs-hrs-billed">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Projected hours</div>
+          <div class="card-value" id="dcs-hrs-proj">—</div>
         </div>
       </div>
     </div>
@@ -340,9 +344,9 @@
           <div class="card-value" id="dcs-ly-rev">—</div>
         </div>
         <div class="card">
-          <div class="card-label">YOY change</div>
+          <div class="card-label">YOY projected</div>
           <div class="card-value" id="dcs-yoy">—</div>
-          <div class="card-sub">vs same month last year</div>
+          <div class="card-sub">Projected Apr 2026 vs Apr 2025</div>
         </div>
         <div class="card">
           <div class="card-label">GP % (2025)</div>
@@ -498,11 +502,12 @@ async function loadDCS() {
     const revMTD   = get(grid, mRow, rCol);
     const salesMTD = get(grid, mRow, salesPos ? salesPos[1] : 5);
     const projRev  = get(grid, pRow, pCol);
-    const avgRO    = get(grid, mRow, avgROPos ? avgROPos[1] : 11);
+    const avgRO    = get(grid, 2, 11);   // L3 = row index 2, col 11
     const carsMTD  = get(grid, mRow, rCol + 1);
     const carsProj = get(grid, pRow, pCol + 1);
-    const gpPct    = get(grid, mRow, 1);
-    const hrsBilled= get(grid, mRow, 2);
+    const gpPct    = get(grid, 0, 8);    // I1 = row index 0, col 8
+    const hrsBilled= get(grid, mRow, 10); // K4 = row index 3, col 10
+    const hrsProj  = get(grid, pRow, 10); // K3 = row index 2, col 10
     const lyRev    = get(grid, lyRow, lCol);
     const lyGP     = get(grid, lyRow, lCol + 1);
     const lyHrs    = get(grid, lyRow, lCol + 2);
@@ -516,16 +521,17 @@ async function loadDCS() {
     setText('dcs-cars-proj',  fmtN(carsProj));
     setText('dcs-gp-pct',     fmtPct(gpPct));
     setText('dcs-hrs-billed', fmtN(hrsBilled));
+    setText('dcs-hrs-proj',   fmtN(hrsProj));
     setText('dcs-ly-rev',     fmt$(lyRev));
     setText('dcs-ly-gp',      fmtPct(lyGP));
     setText('dcs-ly-hrs',     fmtN(lyHrs));
     setText('dcs-ly-trucks',  fmtN(lyTrucks));
 
-    // YOY
-    const curN = parseFloat(clean(revMTD));
-    const lyN  = parseFloat(clean(lyRev));
-    if (!isNaN(curN) && !isNaN(lyN) && lyN > 0) {
-      const pct = Math.round(((curN - lyN) / lyN) * 100);
+    // YOY — projected this year vs actual last year
+    const projN = parseFloat(clean(projRev));
+    const lyN   = parseFloat(clean(lyRev));
+    if (!isNaN(projN) && !isNaN(lyN) && lyN > 0) {
+      const pct = Math.round(((projN - lyN) / lyN) * 100);
       setText('dcs-yoy', (pct >= 0 ? '+' : '') + pct + '%');
       setClass('dcs-yoy', pct >= 0 ? 'up' : 'down');
     }
