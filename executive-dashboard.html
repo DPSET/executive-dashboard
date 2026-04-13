@@ -1160,33 +1160,17 @@ async function loadPayroll() {
     // Row 5+: Payroll periods (1/10, 1/24, etc)
     //
     // Column mapping (B=1, I=8, J=9, K=10, L=11, M=12, N=13, O=14, P=15, Q=16):
-    // B(1)=Tech Labor, I(8)=Total Burden%, J(9)=Productivity
-    // K(10)=Effective Labor, L(11)=Labor Hours, M(12)=GP Per Labor HR
-    // N(13)=Cost Per Labor Hour, O(14)=Labor GP%, P(15)=Cash Requirements
-    // Q(16)=GP$$$
-    // Total Payroll = need to find — scan row 4 for ~47951
+    // Column mapping confirmed from console output
 
-    // Find Total Payroll column by scanning YTD row for known value
-    let payCol = -1;
-    for (let c = 0; c < 20; c++) {
-      const v = clean(g(4, c));
-      if (v === '47951' || v === '4795168' || parseFloat(v) > 40000 && parseFloat(v) < 60000) {
-        payCol = c; break;
-      }
-    }
-    if (payCol === -1) payCol = 15; // fallback P
+    // Confirmed column mapping from console log:
+    // 1=Date, 6=TotalPayroll, 9=Burden%, 10=Productivity
+    // 12=LaborHours, 13=GPperLaborHR, 15=LaborGP%
+    // Row 4(index 4)=YTD, Rows 5-30=pay periods
 
-    // Log first 8 rows to see structure
-    console.log('PAYROLL RAW:');
-    for (let r = 0; r < Math.min(8, grid.length); r++) {
-      console.log('Row' + (r+1) + ':', JSON.stringify(grid[r]));
-    }
-
-    // Rows 6-31 (index 5-30) = pay periods, B=date(col1), Q=totalPay(col16)
-    // Scan forward to find last row that has BOTH a date AND a value in Q
+    // Find latest — last row with Total Payroll (col 6) > 0
     let latestRow = -1;
     for (let r = 30; r >= 5; r--) {
-      if (g(r, 1) && g(r, 16) && parseFloat(clean(g(r, 16))) > 0) {
+      if (g(r, 1) && g(r, 6) && parseFloat(clean(g(r, 6))) > 0) {
         latestRow = r; break;
       }
     }
@@ -1194,25 +1178,20 @@ async function loadPayroll() {
 
     const ytdRow = 4;
 
-    // Confirmed column mapping (0-indexed, A=0):
-    // B(1)=Date, K(10)=Productivity, M(12)=LaborHours
-    // N(13)=GPperLaborHR, O(14)=?, P(15)=LaborGP%, Q(16)=TotalPayroll(CashReq)
-    // YTD = row 5 (index 4), latest period = find last row with date in col 1
+    const date     = g(latestRow, 1);   // Date
+    const totalPay = g(latestRow, 6);   // Total Payroll
+    const burden   = g(latestRow, 9);   // Total Burden %
+    const prod     = g(latestRow, 10);  // Productivity
+    const laborHrs = g(latestRow, 12);  // Labor Hours
+    const gpLH     = g(latestRow, 13);  // GP Per Labor HR
+    const laborGP  = g(latestRow, 15);  // Labor GP %
 
-    const date     = g(latestRow, 1);   // B
-    const totalPay = g(latestRow, 16);  // Q = Cash Requirements / Total Payroll
-    const prod     = g(latestRow, 10);  // K = Productivity
-    const laborHrs = g(latestRow, 12);  // M = Labor Hours
-    const gpLH     = g(latestRow, 13);  // N = GP Per Labor HR
-    const laborGP  = g(latestRow, 15);  // P = Labor GP%
-    const burden   = g(latestRow, 3);   // D = Total Burden%
-
-    const ytdTotal   = g(ytdRow, 16);
+    const ytdTotal   = g(ytdRow, 6);
+    const ytdBurden  = g(ytdRow, 9);
     const ytdProd    = g(ytdRow, 10);
     const ytdHrs     = g(ytdRow, 12);
     const ytdGPLH    = g(ytdRow, 13);
     const ytdLaborGP = g(ytdRow, 15);
-    const ytdBurden  = g(ytdRow, 3);
 
     // Smart percent formatter — handles both 0.7110 and 71.10% and "71.10%"
     function pct(v) {
@@ -1236,30 +1215,42 @@ async function loadPayroll() {
     setText('pr-burden',     pct(burden));
     setText('pr-burden-ytd', pct(ytdBurden));
 
-    // Benchmark color coding
-    function colorEl(id, val, min, max) {
-      const n = parseFloat(String(val).replace('%',''));
-      const actual = n < 2 ? n * 100 : n;
-      const el = document.getElementById(id);
-      if (el && !isNaN(actual)) {
-        el.style.color = (actual >= min && actual <= max) ? '#16a34a' : '#dc2626';
-      }
+    // Color code vs benchmarks
+    // pctVal converts "71.10%" or "0.7110" to number like 71.10
+    function pctVal(v) {
+      const s = String(v).replace('%','').trim();
+      const n = parseFloat(s);
+      return n < 2 ? n * 100 : n;
     }
-    function colorElMin(id, val, min) {
-      const n = parseFloat(clean(val));
+    function colorBench(id, val, greenFn) {
       const el = document.getElementById(id);
-      if (el && !isNaN(n)) el.style.color = n >= min ? '#16a34a' : '#dc2626';
+      if (!el) return;
+      const n = pctVal(val);
+      if (!isNaN(n)) el.style.color = greenFn(n) ? '#16a34a' : '#dc2626';
     }
 
-    colorEl('pr-gp-pct',  laborGP,  75, 85);
-    colorEl('pr-prod',    prod,      75, 85);
-    colorElMin('pr-hrs',  laborHrs,  384);
-    colorElMin('pr-gplh', gpLH,      250);
+    // Labor GP% — green if >= 75%
+    colorBench('pr-gp-pct',  laborGP,  n => n >= 75);
+    colorBench('pr-gp-ytd',  ytdLaborGP, n => n >= 75);
+    // Productivity — green if 75-85%
+    colorBench('pr-prod',    prod,     n => n >= 75 && n <= 85);
+    colorBench('pr-prod-ytd',ytdProd,  n => n >= 75 && n <= 85);
+    // Labor Hours — green if >= 384
+    colorBench('pr-hrs',     laborHrs, n => n >= 384);
+    colorBench('pr-hrs-ytd', ytdHrs,   n => n >= 384);
+    // GP Per Labor HR — green if >= 250
+    colorBench('pr-gplh',    gpLH,     n => parseFloat(clean(gpLH)) >= 250);
+    colorBench('pr-gplh-ytd',ytdGPLH,  n => parseFloat(clean(ytdGPLH)) >= 250);
+    // Burden % — green if 24-28%
+    colorBench('pr-burden',    burden,    n => n >= 24 && n <= 28);
+    colorBench('pr-burden-ytd',ytdBurden, n => n >= 24 && n <= 28);
 
-    const benchBurden = parseFloat(clean(g(2, 8))) || 24;
-    setText('pr-gp-bench',   ((parseFloat(String(laborGP).replace('%','')) < 2 ? parseFloat(String(laborGP).replace('%',''))*100 : parseFloat(String(laborGP).replace('%',''))) >= 75 ? '✓' : '✗') + ' Benchmark: 75–85%');
-    setText('pr-prod-bench', ((parseFloat(String(prod).replace('%','')) < 2 ? parseFloat(String(prod).replace('%',''))*100 : parseFloat(String(prod).replace('%',''))) >= 75 ? '✓' : '✗') + ' Benchmark: 75–85%');
-    setText('pr-hrs-bench',  (parseFloat(clean(laborHrs)) >= 384 ? '✓' : '✗') + ' Benchmark: 384');
+    const gpOK   = pctVal(laborGP) >= 75;
+    const prodOK = pctVal(prod) >= 75 && pctVal(prod) <= 85;
+    const hrsOK  = parseFloat(clean(laborHrs)) >= 384;
+    setText('pr-gp-bench',   (gpOK   ? '✓' : '✗') + ' Benchmark: 75–85%');
+    setText('pr-prod-bench', (prodOK ? '✓' : '✗') + ' Benchmark: 75–85%');
+    setText('pr-hrs-bench',  (hrsOK  ? '✓' : '✗') + ' Benchmark: 384');
 
   } catch(e) {
     setText('pr-date', '⚠️ ' + e.message);
