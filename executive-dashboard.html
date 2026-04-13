@@ -243,19 +243,144 @@
     color: #ccc;
   }
 
-  @media (max-width: 360px) {
-    .card-value { font-size: 18px; }
-    .cards { gap: 8px; }
+  /* CADM accent */
+  .brand-switch-btn.active-cadm {
+    color: #fff;
+    border-bottom-color: #C8102E;
+    background: linear-gradient(90deg, rgba(200,16,46,0.3), rgba(0,61,165,0.3));
   }
+  .prog-cadm { background: linear-gradient(90deg, #C8102E, #003DA5); }
 </style>
 </head>
 <body>
 
 <!-- BRAND SWITCHER -->
 <div class="brand-switcher">
-  <button class="brand-switch-btn active-dcs" onclick="switchBrand('dcs', this)">🔧 Diesel Performance</button>
+  <button class="brand-switch-btn active-cadm" onclick="switchBrand('cadm', this)">⭐ CADM</button>
+  <button class="brand-switch-btn" onclick="switchBrand('dcs', this)">🔧 Diesel</button>
   <button class="brand-switch-btn" onclick="switchBrand('euro', this)">🔵 EuroTech</button>
 </div>
+
+<!-- CADM DASHBOARD -->
+<div id="brand-cadm">
+  <div class="header">
+    <div class="header-accent" style="background: linear-gradient(90deg, #C8102E, #003DA5);"></div>
+    <div class="header-title">CADM — Company Summary</div>
+    <div class="header-sub">Diesel Performance &amp; EuroTech Combined &nbsp;·&nbsp; Rocklin, CA</div>
+    <div class="header-updated" id="cadm-updated">Loading data...</div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-btn active-cadm active" onclick="switchView('cadm-summary', 'cadm', this)">Summary</button>
+  </div>
+
+  <div id="cadm-summary" class="view active">
+
+    <div class="section">
+      <div class="section-label">Combined Revenue — Month to Date</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Total Revenue MTD</div>
+          <div class="card-value large" id="cadm-rev-mtd">—</div>
+          <div class="card-sub">Both stores combined</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total Sales MTD</div>
+          <div class="card-value large" id="cadm-sales-mtd">—</div>
+          <div class="card-sub">Sold, not yet picked up</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Monthly Goal</div>
+      <div class="card">
+        <div class="card-label">Combined Projected Revenue</div>
+        <div class="card-value" id="cadm-proj-rev">—</div>
+        <div class="card-sub" id="cadm-proj-pct"> </div>
+        <div class="prog-wrap">
+          <div class="prog-bar prog-cadm" id="cadm-proj-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">By Location — Revenue MTD</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Diesel Performance</div>
+          <div class="card-value" id="cadm-dcs-rev">—</div>
+          <div class="card-sub" id="cadm-dcs-pct"> </div>
+        </div>
+        <div class="card">
+          <div class="card-label">EuroTech</div>
+          <div class="card-value" id="cadm-euro-rev">—</div>
+          <div class="card-sub" id="cadm-euro-pct"> </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">Combined Car Count &amp; Productivity</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Total cars completed MTD</div>
+          <div class="card-value" id="cadm-cars-mtd">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total projected cars</div>
+          <div class="card-value" id="cadm-cars-proj">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total hours billed</div>
+          <div class="card-value" id="cadm-hrs-billed">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total projected hours</div>
+          <div class="card-value" id="cadm-hrs-proj">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">vs April 2025 — Same Month Last Year</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Combined revenue (2025)</div>
+          <div class="card-value" id="cadm-ly-rev">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">YOY projected</div>
+          <div class="card-value" id="cadm-yoy">—</div>
+          <div class="card-sub">Projected 2026 vs actual 2025</div>
+        </div>
+        <div class="card">
+          <div class="card-label">DCS last year</div>
+          <div class="card-value" id="cadm-dcs-ly-rev">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">EuroTech last year</div>
+          <div class="card-value" id="cadm-euro-ly-rev">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Combined cars (2025)</div>
+          <div class="card-value" id="cadm-ly-cars">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Combined hours (2025)</div>
+          <div class="card-value" id="cadm-ly-hrs">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end brand-cadm -->
 
 <!-- DCS DASHBOARD -->
 <div id="brand-dcs">
@@ -505,10 +630,14 @@ const EURO_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vShUFGNABorep0
 
 // ─── BRAND SWITCH ─────────────────────────────────────────────────────────────
 function switchBrand(brand, btn) {
+  document.getElementById('brand-cadm').style.display = brand === 'cadm' ? 'block' : 'none';
   document.getElementById('brand-dcs').style.display  = brand === 'dcs'  ? 'block' : 'none';
   document.getElementById('brand-euro').style.display = brand === 'euro' ? 'block' : 'none';
   document.querySelectorAll('.brand-switch-btn').forEach(b => {
-    b.classList.remove('active-dcs','active-euro');
+    b.classList.remove('active-dcs','active-euro','active-cadm');
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderBottomColor = '';
   });
   btn.classList.add('active-' + brand);
 }
@@ -683,6 +812,19 @@ async function loadDCS() {
 
     setText('dcs-updated', 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
 
+    // Store for CADM combined view
+    window._dcs_rev    = parseFloat(clean(revMTD))   || 0;
+    window._dcs_sales  = parseFloat(clean(salesMTD)) || 0;
+    window._dcs_proj   = parseFloat(clean(projRev))  || 0;
+    window._dcs_cars   = parseFloat(clean(carsMTD))  || 0;
+    window._dcs_carsp  = parseFloat(clean(carsProj)) || 0;
+    window._dcs_hrs    = parseFloat(clean(hrsBilled))|| 0;
+    window._dcs_hrsp   = parseFloat(clean(hrsProj))  || 0;
+    window._dcs_lyrev  = parseFloat(clean(lyRev))    || 0;
+    window._dcs_lyhrs  = parseFloat(clean(lyHrs))    || 0;
+    window._dcs_lycars = parseFloat(clean(lyTrucks)) || 0;
+    updateCADM();
+
   } catch(e) {
     setText('dcs-updated', '⚠️ ' + e.message);
     setText('dcs-rev-mtd', 'Error');
@@ -801,6 +943,19 @@ async function loadEuro() {
 
     setText('euro-updated', 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
 
+    // Store for CADM combined view
+    window._euro_rev    = parseFloat(clean(revMTD))   || 0;
+    window._euro_sales  = parseFloat(clean(salesMTD)) || 0;
+    window._euro_proj   = parseFloat(clean(projRev))  || 0;
+    window._euro_cars   = parseFloat(clean(carsMTD))  || 0;
+    window._euro_carsp  = parseFloat(clean(carsProj)) || 0;
+    window._euro_hrs    = parseFloat(clean(hrsBilled))|| 0;
+    window._euro_hrsp   = parseFloat(clean(hrsProj))  || 0;
+    window._euro_lyrev  = parseFloat(clean(lyRev))    || 0;
+    window._euro_lyhrs  = parseFloat(clean(lyHrs))    || 0;
+    window._euro_lycars = parseFloat(clean(lyCars))   || 0;
+    updateCADM();
+
   } catch(e) {
     setText('euro-updated', '⚠️ ' + e.message);
     setText('euro-rev-mtd', 'Error');
@@ -808,7 +963,84 @@ async function loadEuro() {
   }
 }
 
+// ─── CADM COMBINED CALC ───────────────────────────────────────────────────────
+function updateCADM() {
+  // Pull parsed values stored after each load
+  const dRev    = window._dcs_rev    || 0;
+  const dSales  = window._dcs_sales  || 0;
+  const dProj   = window._dcs_proj   || 0;
+  const dCars   = window._dcs_cars   || 0;
+  const dCarsP  = window._dcs_carsp  || 0;
+  const dHrs    = window._dcs_hrs    || 0;
+  const dHrsP   = window._dcs_hrsp   || 0;
+  const dLyRev  = window._dcs_lyrev  || 0;
+  const dLyHrs  = window._dcs_lyhrs  || 0;
+  const dLyCars = window._dcs_lycars || 0;
+
+  const eRev    = window._euro_rev    || 0;
+  const eSales  = window._euro_sales  || 0;
+  const eProj   = window._euro_proj   || 0;
+  const eCars   = window._euro_cars   || 0;
+  const eCarsP  = window._euro_carsp  || 0;
+  const eHrs    = window._euro_hrs    || 0;
+  const eHrsP   = window._euro_hrsp   || 0;
+  const eLyRev  = window._euro_lyrev  || 0;
+  const eLyHrs  = window._euro_lyhrs  || 0;
+  const eLyCars = window._euro_lycars || 0;
+
+  const totalRev   = dRev   + eRev;
+  const totalSales = dSales + eSales;
+  const totalProj  = dProj  + eProj;
+  const totalCars  = dCars  + eCars;
+  const totalCarsP = dCarsP + eCarsP;
+  const totalHrs   = dHrs   + eHrs;
+  const totalHrsP  = dHrsP  + eHrsP;
+  const totalLyRev = dLyRev + eLyRev;
+  const totalLyHrs = dLyHrs + eLyHrs;
+  const totalLyCars= dLyCars+ eLyCars;
+
+  setText('cadm-rev-mtd',      fmt$(totalRev));
+  setText('cadm-sales-mtd',    fmt$(totalSales));
+  setText('cadm-proj-rev',     fmt$(totalProj));
+  setText('cadm-dcs-rev',      fmt$(dRev));
+  setText('cadm-euro-rev',     fmt$(eRev));
+  setText('cadm-cars-mtd',     fmtN(totalCars));
+  setText('cadm-cars-proj',    fmtN(totalCarsP));
+  setText('cadm-hrs-billed',   fmtN(totalHrs));
+  setText('cadm-hrs-proj',     fmtN(totalHrsP));
+  setText('cadm-ly-rev',       fmt$(totalLyRev));
+  setText('cadm-dcs-ly-rev',   fmt$(dLyRev));
+  setText('cadm-euro-ly-rev',  fmt$(eLyRev));
+  setText('cadm-ly-cars',      fmtN(totalLyCars));
+  setText('cadm-ly-hrs',       fmtN(totalLyHrs));
+
+  // Location % breakdown
+  if (totalRev > 0) {
+    setText('cadm-dcs-pct',  Math.round((dRev/totalRev)*100) + '% of total');
+    setText('cadm-euro-pct', Math.round((eRev/totalRev)*100) + '% of total');
+  }
+
+  // Progress bar
+  if (totalProj > 0) {
+    const pct = Math.min(100, Math.round((totalRev/totalProj)*100));
+    document.getElementById('cadm-proj-bar').style.width = pct + '%';
+    setText('cadm-proj-pct', pct + '% of combined monthly goal');
+  }
+
+  // YOY projected vs last year
+  if (totalProj > 0 && totalLyRev > 0) {
+    const pct = Math.round(((totalProj - totalLyRev) / totalLyRev) * 100);
+    setText('cadm-yoy', (pct >= 0 ? '+' : '') + pct + '%');
+    setClass('cadm-yoy', pct >= 0 ? 'up' : 'down');
+  }
+
+  setText('cadm-updated', 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
+// Show CADM by default, hide others
+document.getElementById('brand-dcs').style.display  = 'none';
+document.getElementById('brand-euro').style.display = 'none';
 loadDCS();
 loadEuro();
 setInterval(loadDCS, 300000);
