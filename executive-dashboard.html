@@ -1176,63 +1176,41 @@ async function loadPayroll() {
     }
     if (payCol === -1) payCol = 15; // fallback P
 
-    // Find latest period — last row with a date AND labor hours data
+    // Find latest period — last row with date in col 1 (B) AND data in col 16 (Q)
     let latestRow = -1;
     for (let r = grid.length - 1; r >= 5; r--) {
-      if (g(r, 0) && g(r, 0).includes('/') && g(r, 11)) {
+      if (g(r, 1) && g(r, 1).includes('/') && g(r, 16)) {
         latestRow = r; break;
       }
     }
     if (latestRow === -1) {
       for (let r = grid.length - 1; r >= 5; r--) {
-        if (g(r, 0) && g(r, 0).includes('/')) { latestRow = r; break; }
+        if (g(r, 1) && g(r, 1).includes('/')) { latestRow = r; break; }
       }
     }
     if (latestRow === -1) { setText('pr-date', 'No data yet'); return; }
 
     const ytdRow = 4;
 
-    // Debug: print row 4 and latest row to console
-    console.log('YTD row:', grid[4]);
-    console.log('Latest row:', grid[latestRow]);
+    // Confirmed column mapping (0-indexed, A=0):
+    // B(1)=Date, K(10)=Productivity, M(12)=LaborHours
+    // N(13)=GPperLaborHR, O(14)=?, P(15)=LaborGP%, Q(16)=TotalPayroll(CashReq)
+    // YTD = row 5 (index 4), latest period = find last row with date in col 1
 
-    // From spreadsheet screenshot (A col is empty/row numbers):
-    // A(0)=empty, B(1)=Date, C(2)=TechLabor, D(3)=TotalBurden%
-    // E(4)=Productivity, F(5)=EffectiveLabor, G(6)=LaborHours
-    // H(7)=GPperLaborHR, I(8)=CostPerLaborHour, J(9)=LaborGP%
-    // K(10)=CashRequirements, L(11)=GP$$$
-    // Total Payroll = Q col but sheet has it further right
-    // Let's scan for it by finding ~48521 in latest row
-    let tpCol = -1;
-    for (let c = 0; c < 25; c++) {
-      const n = parseFloat(clean(g(latestRow, c)));
-      if (n > 40000 && n < 60000) { tpCol = c; break; }
-    }
-    if (tpCol === -1) tpCol = 16;
-    console.log('Total pay col:', tpCol, 'value:', g(latestRow, tpCol));
-
-    const date     = g(latestRow, 1);   // B = Date
-    const totalPay = g(latestRow, tpCol);
+    const date     = g(latestRow, 1);   // B
+    const totalPay = g(latestRow, 16);  // Q = Cash Requirements / Total Payroll
+    const prod     = g(latestRow, 10);  // K = Productivity
+    const laborHrs = g(latestRow, 12);  // M = Labor Hours
+    const gpLH     = g(latestRow, 13);  // N = GP Per Labor HR
+    const laborGP  = g(latestRow, 15);  // P = Labor GP%
     const burden   = g(latestRow, 3);   // D = Total Burden%
-    const prod     = g(latestRow, 4);   // E = Productivity
-    const laborHrs = g(latestRow, 6);   // G = Labor Hours
-    const gpLH     = g(latestRow, 7);   // H = GP Per Labor HR
-    const laborGP  = g(latestRow, 9);   // J = Labor GP%
 
-    // Find YTD total pay col same way
-    let ytdTpCol = -1;
-    for (let c = 0; c < 25; c++) {
-      const n = parseFloat(clean(g(ytdRow, c)));
-      if (n > 40000 && n < 60000) { ytdTpCol = c; break; }
-    }
-    if (ytdTpCol === -1) ytdTpCol = tpCol;
-
-    const ytdTotal   = g(ytdRow, ytdTpCol);
+    const ytdTotal   = g(ytdRow, 16);
+    const ytdProd    = g(ytdRow, 10);
+    const ytdHrs     = g(ytdRow, 12);
+    const ytdGPLH    = g(ytdRow, 13);
+    const ytdLaborGP = g(ytdRow, 15);
     const ytdBurden  = g(ytdRow, 3);
-    const ytdProd    = g(ytdRow, 4);
-    const ytdHrs     = g(ytdRow, 6);
-    const ytdGPLH    = g(ytdRow, 7);
-    const ytdLaborGP = g(ytdRow, 9);
 
     // Smart percent formatter — handles both 0.7110 and 71.10% and "71.10%"
     function pct(v) {
