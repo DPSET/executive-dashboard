@@ -384,19 +384,124 @@
     <div class="header-accent" style="background: linear-gradient(90deg, #003DA5, #FFD700);"></div>
     <div class="header-title">EuroTech Auto &amp; Electric</div>
     <div class="header-sub">Rocklin, CA &nbsp;·&nbsp; (916) 884-5245</div>
-    <div class="header-updated">Coming soon</div>
+    <div class="header-updated" id="euro-updated">Loading data...</div>
   </div>
-  <div class="coming-soon">
-    <div class="cs-icon">🔧</div>
-    <p>EuroTech data coming soon.<br>Connect your EuroTech Google Sheet to activate.</p>
+
+  <div class="nav-tabs">
+    <button class="nav-btn active-euro active" onclick="switchView('euro-summary', 'euro', this)">Summary</button>
+    <button class="nav-btn" onclick="switchView('euro-checks', 'euro', this)">Check Register</button>
   </div>
+
+  <div id="euro-summary" class="view active">
+
+    <div class="section">
+      <div class="section-label">Revenue — Month to Date</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Revenue MTD</div>
+          <div class="card-value large" id="euro-rev-mtd">—</div>
+          <div class="card-sub">Picked up &amp; completed</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Sales MTD</div>
+          <div class="card-value large" id="euro-sales-mtd">—</div>
+          <div class="card-sub">Sold, not yet picked up</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Monthly Goal</div>
+      <div class="card">
+        <div class="card-label">Projected Revenue</div>
+        <div class="card-value" id="euro-proj-rev">—</div>
+        <div class="card-sub" id="euro-proj-pct"> </div>
+        <div class="prog-wrap">
+          <div class="prog-bar prog-euro" id="euro-proj-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">Car Count &amp; Productivity</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Cars completed MTD</div>
+          <div class="card-value" id="euro-cars-mtd">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Projected car count</div>
+          <div class="card-value" id="euro-cars-proj">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Avg RO</div>
+          <div class="card-value" id="euro-avg-ro">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Gross profit %</div>
+          <div class="card-value" id="euro-gp-pct">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Hours billed MTD</div>
+          <div class="card-value" id="euro-hrs-billed">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Projected hours</div>
+          <div class="card-value" id="euro-hrs-proj">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">vs April 2025 — Same Month Last Year</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Revenue (Apr 2025)</div>
+          <div class="card-value" id="euro-ly-rev">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">YOY projected</div>
+          <div class="card-value" id="euro-yoy">—</div>
+          <div class="card-sub">Projected Apr 2026 vs Apr 2025</div>
+        </div>
+        <div class="card">
+          <div class="card-label">GP % (2025)</div>
+          <div class="card-value" id="euro-ly-gp">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Cars seen (2025)</div>
+          <div class="card-value" id="euro-ly-cars">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Hours billed (2025)</div>
+          <div class="card-value" id="euro-ly-hrs">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="euro-checks" class="view">
+    <div class="section">
+      <div class="section-label">Check Register — Current Period</div>
+      <div class="check-scroll">
+        <div id="euro-check-wrap"><div class="status-msg">Loading check register...</div></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- end brand-euro -->
 
 <div class="footer" id="footer-note">Auto-refreshes every 5 minutes &nbsp;·&nbsp; View only</div>
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const DCS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRTIKKapVCxkPuYkfdBr9uFgJp-J_BSM7kiLF-T9Wz9Sd_f43JfUYecvMFMbHJ8HB8Uzf5Bx6lrBEqG/pub?gid=672950456&single=true&output=csv';
+const DCS_CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRTIKKapVCxkPuYkfdBr9uFgJp-J_BSM7kiLF-T9Wz9Sd_f43JfUYecvMFMbHJ8HB8Uzf5Bx6lrBEqG/pub?gid=672950456&single=true&output=csv';
+const EURO_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vShUFGNABorep04YU0FZ9r3nDOZc0npfh_4x6W9MvAXlfsv9Up-njEzoWqxMGwyoPTx1n1ZR3-gmnFv/pub?gid=60820244&single=true&output=csv';
 
 // ─── BRAND SWITCH ─────────────────────────────────────────────────────────────
 function switchBrand(brand, btn) {
@@ -584,9 +689,122 @@ async function loadDCS() {
   }
 }
 
+// ─── LOAD EURO DATA ───────────────────────────────────────────────────────────
+async function loadEuro() {
+  try {
+    const res = await fetch(EURO_CSV);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    if (txt.trim().startsWith('<')) throw new Error('Sheet not public — got HTML response.');
+    const grid = parseCSV(txt);
+
+    const revPos    = findCell(grid, '104672') || findCell(grid, '');
+    const salesPos  = findCell(grid, '82714');
+    const projPos   = findCell(grid, '287848');
+    const lyRevPos  = findCell(grid, '277142');
+
+    // Use same positional logic as DCS since layout is identical
+    // Fall back to known positions if anchor values differ
+    const mRow = revPos  ? revPos[0]  : 3;
+    const pRow = projPos ? projPos[0] : 2;
+    const lyRow= lyRevPos? lyRevPos[0]: 1;
+    const rCol = revPos  ? revPos[1]  : 7;
+    const pCol = projPos ? projPos[1] : 7;
+    const lCol = lyRevPos? lyRevPos[1]: 0;
+
+    // Find revenue MTD by scanning row 3 for largest dollar value if anchor not found
+    let revMTD = get(grid, mRow, rCol);
+    if (!revMTD) revMTD = get(grid, 3, 7);
+
+    const salesMTD  = get(grid, mRow, salesPos ? salesPos[1] : 5);
+    const projRev   = get(grid, pRow, pCol);
+    const avgRO     = get(grid, 2, 11);
+    const carsMTD   = get(grid, mRow, rCol + 1);
+    const carsProj  = get(grid, pRow, pCol + 1);
+    const gpPct     = get(grid, 0, 8);
+    const hrsBilled = get(grid, mRow, 10);
+    const hrsProj   = get(grid, pRow, 10);
+    const lyRev     = get(grid, lyRow, lCol);
+    const lyGP      = get(grid, lyRow, lCol + 1);
+    const lyHrs     = get(grid, lyRow, lCol + 2);
+    const lyCars    = get(grid, lyRow, lCol + 3);
+
+    setText('euro-rev-mtd',    fmt$(revMTD));
+    setText('euro-sales-mtd',  fmt$(salesMTD));
+    setText('euro-proj-rev',   fmt$(projRev));
+    setText('euro-avg-ro',     fmt$(avgRO));
+    setText('euro-cars-mtd',   fmtN(carsMTD));
+    setText('euro-cars-proj',  fmtN(carsProj));
+    setText('euro-gp-pct',     fmtPct(gpPct));
+    setText('euro-hrs-billed', fmtN(hrsBilled));
+    setText('euro-hrs-proj',   fmtN(hrsProj));
+    setText('euro-ly-rev',     fmt$(lyRev));
+    setText('euro-ly-gp',      fmtPct(lyGP));
+    setText('euro-ly-hrs',     fmtN(lyHrs));
+    setText('euro-ly-cars',    fmtN(lyCars));
+
+    // YOY — projected this year vs actual last year
+    const projN = parseFloat(clean(projRev));
+    const lyN   = parseFloat(clean(lyRev));
+    if (!isNaN(projN) && !isNaN(lyN) && lyN > 0) {
+      const pct = Math.round(((projN - lyN) / lyN) * 100);
+      setText('euro-yoy', (pct >= 0 ? '+' : '') + pct + '%');
+      setClass('euro-yoy', pct >= 0 ? 'up' : 'down');
+    }
+
+    // Progress bar
+    const rev  = parseFloat(clean(revMTD)) || 0;
+    const proj = parseFloat(clean(projRev)) || 0;
+    if (proj > 0) {
+      const pct = Math.min(100, Math.round((rev / proj) * 100));
+      document.getElementById('euro-proj-bar').style.width = pct + '%';
+      setText('euro-proj-pct', pct + '% of monthly goal');
+    }
+
+    // Check register — same cols S-X (18-23), rows 5-37 (index 4-36)
+    let html = '<table class="check-table"><thead><tr><th>Check #</th><th>Vendor</th><th>Amount</th><th>Summary</th><th>RO #</th><th>Invoice #</th></tr></thead><tbody>';
+    let found = false;
+    let total = 0;
+    for (let r = 4; r <= 36; r++) {
+      if (!grid[r]) continue;
+      const row = [18,19,20,21,22,23].map(c => get(grid,r,c));
+      if (row.some(v => v)) {
+        found = true;
+        const amt = parseFloat(clean(row[2]));
+        if (!isNaN(amt)) total += amt;
+        html += `<tr>
+          <td>${row[0]||'—'}</td>
+          <td>${row[1]||'—'}</td>
+          <td>${fmt$(row[2])!=='—'?fmt$(row[2]):row[2]||'—'}</td>
+          <td>${row[3]||'—'}</td>
+          <td>${row[4]||'—'}</td>
+          <td>${row[5]||'—'}</td>
+        </tr>`;
+      }
+    }
+    html += '</tbody>';
+    if (found && total > 0) {
+      html += `<tfoot><tr><td colspan="6" class="check-total">Total: ${fmt$(total)}</td></tr></tfoot>`;
+    }
+    html += '</table>';
+    document.getElementById('euro-check-wrap').innerHTML = found
+      ? html
+      : '<div class="status-msg">No checks recorded yet this period.</div>';
+
+    setText('euro-updated', 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+
+  } catch(e) {
+    setText('euro-updated', '⚠️ ' + e.message);
+    setText('euro-rev-mtd', 'Error');
+    console.error('Euro load error:', e);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadDCS();
+loadEuro();
 setInterval(loadDCS, 300000);
+setInterval(loadEuro, 300000);
 </script>
 </body>
 </html>
