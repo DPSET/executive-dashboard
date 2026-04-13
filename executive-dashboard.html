@@ -1162,43 +1162,62 @@ async function loadPayroll() {
 
     const ytdRow = 4; // Row 5 in sheets = index 4
 
-    // Find latest period — last row from index 5 onwards with data in col 1
+    // Find latest period — last row from index 5 with data in col 0
     let latestRow = -1;
     for (let r = grid.length - 1; r >= 5; r--) {
-      if (g(r, 0) && g(r, 1)) { latestRow = r; break; }
+      if (g(r, 0) && g(r, 16)) { latestRow = r; break; }
+    }
+    if (latestRow === -1) {
+      for (let r = grid.length - 1; r >= 5; r--) {
+        if (g(r, 0)) { latestRow = r; break; }
+      }
     }
 
     if (latestRow === -1) { setText('pr-date', 'No payroll data yet'); return; }
 
-    const numTechs = g(0, 12); // M1
-    const date     = g(latestRow, 0);
-    const totalPay = g(latestRow, 5);
-    const burden   = g(latestRow, 8);
-    const prod     = g(latestRow, 9);
-    const laborHrs = g(latestRow, 11);
-    const gpLH     = g(latestRow, 12);
-    const laborGP  = g(latestRow, 14);
+    // Confirmed column mapping (0-indexed, A=0):
+    // A=Date, B=Payroll, C=Variance, D=BonusPaid, E=Management
+    // F=?, G=?, H=?, I=?, J=BonusAccrual, K=TechLabor(col10)
+    // K=Productivity(col10), L=EffectiveLabor, M=LaborHours(col12)
+    // N=GPperLaborHr(col13), O=CostPerLaborHr(col14)
+    // P=LaborGP%(col15), Q=TotalPayroll(col16)
+    // Percentages stored as decimals — multiply by 100
 
-    const ytdTotal   = g(ytdRow, 5);
-    const ytdBurden  = g(ytdRow, 8);
-    const ytdProd    = g(ytdRow, 9);
-    const ytdHrs     = g(ytdRow, 11);
-    const ytdGPLH    = g(ytdRow, 12);
-    const ytdLaborGP = g(ytdRow, 14);
+    function pct(v) {
+      const n = parseFloat(clean(v));
+      if (isNaN(n)) return '';
+      // If already looks like a percentage (>1), don't multiply
+      return n > 1 ? n.toFixed(2) + '%' : (n * 100).toFixed(2) + '%';
+    }
+
+    const date     = g(latestRow, 0);
+    const totalPay = g(latestRow, 16); // Q
+    const prod     = g(latestRow, 10); // K
+    const laborHrs = g(latestRow, 12); // M
+    const gpLH     = g(latestRow, 13); // N
+    const laborGP  = g(latestRow, 15); // P
+    const burden   = g(latestRow, 7);  // H — scan for burden
+
+    const ytdTotal   = g(ytdRow, 16);
+    const ytdProd    = g(ytdRow, 10);
+    const ytdHrs     = g(ytdRow, 12);
+    const ytdGPLH    = g(ytdRow, 13);
+    const ytdLaborGP = g(ytdRow, 15);
+    const ytdBurden  = g(ytdRow, 7);
 
     setText('pr-date',       date);
     setText('pr-total',      fmt$(totalPay));
     setText('pr-total-ytd',  fmt$(ytdTotal));
-    setText('pr-gp-pct',     fmtPct(laborGP));
-    setText('pr-gp-ytd',     fmtPct(ytdLaborGP));
-    setText('pr-prod',       fmtPct(prod));
-    setText('pr-prod-ytd',   fmtPct(ytdProd));
+    setText('pr-gp-pct',     pct(laborGP));
+    setText('pr-gp-ytd',     pct(ytdLaborGP));
+    setText('pr-prod',       pct(prod));
+    setText('pr-prod-ytd',   pct(ytdProd));
     setText('pr-hrs',        fmtN(laborHrs));
     setText('pr-hrs-ytd',    fmtN(ytdHrs));
     setText('pr-gplh',       fmt$(gpLH));
     setText('pr-gplh-ytd',   fmt$(ytdGPLH));
-    setText('pr-burden',     fmtPct(burden));
-    setText('pr-burden-ytd', fmtPct(ytdBurden));
+    setText('pr-burden',     pct(burden));
+    setText('pr-burden-ytd', pct(ytdBurden));
 
     // Benchmark indicators
     function benchColor(val, target, higherBetter) {
