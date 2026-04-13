@@ -698,36 +698,21 @@ async function loadEuro() {
     if (txt.trim().startsWith('<')) throw new Error('Sheet not public — got HTML response.');
     const grid = parseCSV(txt);
 
-    const revPos    = findCell(grid, '104672') || findCell(grid, '');
-    const salesPos  = findCell(grid, '82714');
-    const projPos   = findCell(grid, '287848');
-    const lyRevPos  = findCell(grid, '277142');
-
-    // Use same positional logic as DCS since layout is identical
-    // Fall back to known positions if anchor values differ
-    const mRow = revPos  ? revPos[0]  : 3;
-    const pRow = projPos ? projPos[0] : 2;
-    const lyRow= lyRevPos? lyRevPos[0]: 1;
-    const rCol = revPos  ? revPos[1]  : 7;
-    const pCol = projPos ? projPos[1] : 7;
-    const lCol = lyRevPos? lyRevPos[1]: 0;
-
-    // Find revenue MTD by scanning row 3 for largest dollar value if anchor not found
-    let revMTD = get(grid, mRow, rCol);
-    if (!revMTD) revMTD = get(grid, 3, 7);
-
-    const salesMTD  = get(grid, mRow, salesPos ? salesPos[1] : 5);
-    const projRev   = get(grid, pRow, pCol);
-    const avgRO     = get(grid, 2, 11);
-    const carsMTD   = get(grid, mRow, rCol + 1);
-    const carsProj  = get(grid, pRow, pCol + 1);
-    const gpPct     = get(grid, 0, 8);
-    const hrsBilled = get(grid, mRow, 10);
-    const hrsProj   = get(grid, pRow, 10);
-    const lyRev     = get(grid, lyRow, lCol);
-    const lyGP      = get(grid, lyRow, lCol + 1);
-    const lyHrs     = get(grid, lyRow, lCol + 2);
-    const lyCars    = get(grid, lyRow, lCol + 3);
+    // EuroTech — direct positional mapping (confirmed from data dump)
+    // Row 0 = row 1 in sheets, Row 2 = row 3, Row 3 = row 4
+    const revMTD   = get(grid, 3, 7);   // H4  — Revenue MTD $28,582
+    const salesMTD = get(grid, 3, 5);   // F4  — Sales MTD $22,143
+    const projRev  = get(grid, 2, 7);   // H3  — Projected Revenue $104,799
+    const avgRO    = get(grid, 2, 11);  // L3  — Avg RO $1,143
+    const carsMTD  = get(grid, 3, 8);   // I4  — Cars MTD 25
+    const carsProj = get(grid, 2, 8);   // I3  — Projected Cars 92
+    const gpPct    = get(grid, 0, 8);   // I1  — GP% 57.39%
+    const hrsBilled= get(grid, 3, 10);  // K4  — Hours Billed 67.10
+    const hrsProj  = get(grid, 2, 10);  // K3  — Projected Hours
+    const lyRev    = get(grid, 1, 7);   // H2  — Last year revenue $81,191
+    const lyGP     = get(grid, 1, 1);   // B2  — Last year GP%
+    const lyHrs    = get(grid, 1, 2);   // C2  — Last year hours 246.03
+    const lyCars   = get(grid, 1, 0);   // A2  — Last year cars 622
 
     setText('euro-rev-mtd',    fmt$(revMTD));
     setText('euro-sales-mtd',  fmt$(salesMTD));
