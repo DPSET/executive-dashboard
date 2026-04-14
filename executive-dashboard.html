@@ -943,43 +943,20 @@ async function loadEuro() {
     if (txt.trim().startsWith('<')) throw new Error('Sheet not public — got HTML response.');
     const grid = parseCSV(txt);
 
-    // EuroTech — direct positional mapping
-    // Scan for known values since column positions differ from DCS
-    let revMTD='', salesMTD='', projRev='', avgRO='', carsMTD='', carsProj='', gpPct='', hrsBilled='', hrsProj='', lyRev='', lyGP='', lyHrs='', lyCars='';
-
-    for (let r = 0; r < Math.min(grid.length, 8); r++) {
-      for (let c = 0; c < (grid[r]||[]).length; c++) {
-        const v = clean(grid[r][c]);
-        const raw = (grid[r][c]||'').trim();
-        if (v === '28582' || raw === '$28,582')  revMTD   = raw;
-        if (v === '22143' || raw === '$22,143')  salesMTD = raw;
-        if (v === '104799'|| raw === '$104,799') projRev  = raw;
-        if (v === '1143'  || raw === '$1,143')   avgRO    = raw;
-        if (v === '81191' || raw === '$81,191')  lyRev    = raw;
-      }
-    }
-
-    // For numeric-only cells scan all early rows
-    for (let r = 0; r < Math.min(grid.length, 8); r++) {
-      for (let c = 0; c < (grid[r]||[]).length; c++) {
-        const v = clean(grid[r][c]);
-        const raw = String(grid[r][c]||'').trim();
-        if (v === '25'  && !carsMTD)   carsMTD  = v;
-        if (v === '92'  && !carsProj)  carsProj = v;
-        if (v === '622' && !lyCars)    lyCars   = v;
-        if (raw.includes('57.39') && !gpPct)  gpPct = raw;
-        if (raw.includes('57.16') && !lyGP)   lyGP  = raw;
-        if (raw.includes('57.39') && r > 0 && !lyGP) lyGP = raw;
-        if (v === '6710' || v === '67.1' || v === '67.10') hrsBilled = '67.10';
-        if (v === '24603'|| v === '246.03') lyHrs = '246.03';
-      }
-    }
-    // lyGP = B3 (row index 2, col 1), lyCars = D2 (row index 1, col 3)
-    if (!lyGP)   lyGP   = get(grid, 2, 1);
-    if (!lyCars) lyCars = get(grid, 1, 3);
-
-    // Projected hours — K3 = row 2 col 10, try a few positions
-    if (!hrsProj) hrsProj = get(grid, 2, 10) || get(grid, 2, 9) || get(grid, 1, 10);
+    // EuroTech — same cell positions as DCS (confirmed identical layout)
+    const revMTD    = get(grid, 3, 7);   // H4
+    const salesMTD  = get(grid, 3, 5);   // F4
+    const projRev   = get(grid, 2, 7);   // H3
+    const avgRO     = get(grid, 2, 11);  // L3
+    const carsMTD   = get(grid, 3, 8);   // I4
+    const carsProj  = get(grid, 2, 8);   // I3
+    const gpPct     = get(grid, 0, 8);   // I1
+    const hrsBilled = get(grid, 3, 10);  // K4
+    const hrsProj   = get(grid, 2, 10);  // K3
+    const lyRev     = get(grid, 1, 7);   // H2
+    const lyGP      = get(grid, 2, 1);   // B3
+    const lyHrs     = get(grid, 1, 2);   // C2
+    const lyCars    = get(grid, 1, 3);   // D2
 
     setText('euro-rev-mtd',    fmt$(revMTD));
     setText('euro-sales-mtd',  fmt$(salesMTD));
